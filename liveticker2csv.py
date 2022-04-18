@@ -2,6 +2,7 @@
 import httpx #Documentation: https://www.python-httpx.org/quickstart/
 from bs4 import BeautifulSoup #Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 from pathlib import Path
+import pandas as pd
 from pprint import pprint
 
 def get_livetickerpage(url: str) -> httpx.Response.text:
@@ -20,7 +21,7 @@ def match_details(content: httpx.Response.text) -> dict:
             team_shortname_mapping[team_slug_name.replace("-", " ")] = team_slug_name
             team_shortname_mapping[team_slug_name] = team_slug_name
     return {
-        "start_datetime": metadata.attrs.get("data-competition_type"),
+        "start_datetime": pd.to_datetime(metadata.attrs.get("data-datetime")),
         "team_shortname_mapping": team_shortname_mapping
     }
 
