@@ -22,6 +22,7 @@ def match_details(content: httpx.Response.text) -> dict:
             team_shortname_mapping[team_slug_name] = team_slug_name
     return {
         "start_datetime": pd.to_datetime(metadata.attrs.get("data-datetime")),
+        "end_datetime": pd.to_datetime(metadata.attrs.get("data-datetime_end")),
         "team_shortname_mapping": team_shortname_mapping
     }
 
