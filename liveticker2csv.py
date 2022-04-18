@@ -11,9 +11,8 @@ def get_livetickerpage(url: str) -> httpx.Response.text:
     assert page.status_code == 200
     return page.text
 
-def match_details(content: httpx.Response.text) -> dict:
+def match_details(parsed_content: BeautifulSoup) -> dict:
     team_shortname_mapping = dict()
-    parsed_content = BeautifulSoup(content, "html.parser")
     metadata = parsed_content.select("div.first.last.odd.finished.active.match")[0]
     for team_shortname in metadata.select("div.team-shortname"):
         for team in team_shortname.find_all("a"):
