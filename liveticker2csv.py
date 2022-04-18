@@ -3,6 +3,7 @@ import httpx
 
 def get_livetickerpage(url: str):
     page = httpx.get(url)
+    assert page.status_code == 200
     return page.text
 
 
