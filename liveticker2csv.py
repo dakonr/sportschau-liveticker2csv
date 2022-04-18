@@ -1,5 +1,6 @@
 # file: liveticker2csv.py
 import httpx #Documentation: https://www.python-httpx.org/quickstart/
+from collections.abc import Iterable
 from bs4 import BeautifulSoup #Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 from pathlib import Path
 import pandas as pd
@@ -26,8 +27,15 @@ def match_details(content: httpx.Response.text) -> dict:
         "team_shortname_mapping": team_shortname_mapping
     }
 
+def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
+    for element in parsed_content.select("div.module-liveticker")[0].select("div.liveticker"):
+        if element.select("div.liveticker-minute")[0].get_text():
+            yield element
+
 if __name__ == "__main__":
-    page = get_livetickerpage("https://livecenter.sportschau.de/fussball/deutschland-bundesliga/ma9242973/vfb-stuttgart_borussia-dortmund/liveticker/")
-    pprint(
-        match_details(page)
-    )
+    content = get_livetickerpage("https://livecenter.sportschau.de/fussball/deutschland-bundesliga/ma9242973/vfb-stuttgart_borussia-dortmund/liveticker/")
+    parsed_content = BeautifulSoup(content, "html.parser")
+    for element in relevant_liveticker_events(parsed_content): #parsed_content.select("div.module-liveticker")[0].select("div.liveticker"):
+        is_goal = element.attrs.get("data-event_action") == "goal"
+        liveticker_minute = element.select("div.liveticker-minute")[0].get_text()
+        print(liveticker_minute, is_goal, element)
