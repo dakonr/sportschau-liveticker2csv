@@ -1,7 +1,7 @@
 # file: liveticker2csv.py
 import httpx #Documentation: https://www.python-httpx.org/quickstart/
 from collections.abc import Iterable
-from bs4 import BeautifulSoup #Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
+from bs4 import BeautifulSoup, Tag #Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 from pathlib import Path
 import pandas as pd
 from pprint import pprint
@@ -26,6 +26,42 @@ def match_details(parsed_content: BeautifulSoup) -> dict:
         "team_shortname_mapping": team_shortname_mapping
     }
 
+def corresponding_team(liveticker_event: Tag) -> str:
+    for tag in liveticker_event.select("div.team-shortname"):
+        for a_tag in tag.select("a"):
+            return Path(a_tag.attrs.get("href")).parts[-2]
+
+def liveticker_content(liveticker_event: Tag) -> str:
+    for tag in liveticker_event.select("div.liveticker-content"):
+        return tag.get_text()
+
+def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
+    event_minute = int(liveticker_event.select("div.liveticker-minute")[0].get_text())
+    event_action = element.attrs.get("data-event_action")
+    is_goal = event_action == "goal"
+    is_card = event_action == "card"
+    relevant_team = corresponding_team(liveticker_event)
+    text = liveticker_content(liveticker_event)
+    halftime = 0
+    event_timestamp = None
+    if event_minute <= 45:
+        halftime = 1
+        event_timestamp = match_details.get("start_datetime") + pd.to_timedelta(f"{event_minute-1} min")
+    if event_minute > 45:
+        halftime = 2
+        event_timestamp = match_details.get("end_datetime") - pd.to_timedelta(f"{90-event_minute} min")
+
+    return {
+        "minute": event_minute,
+        "action": event_action,
+        "is_goal": is_goal,
+        "is_card": is_card,
+        "relevant_team": relevant_team,
+        "halftime": halftime,
+        "timestamp": event_timestamp,
+        "text": text
+    }
+
 def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
     for element in parsed_content.select("div.module-liveticker")[0].select("div.liveticker"):
         if element.select("div.liveticker-minute")[0].get_text():
@@ -34,7 +70,6 @@ def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
 if __name__ == "__main__":
     content = get_livetickerpage("https://livecenter.sportschau.de/fussball/deutschland-bundesliga/ma9242973/vfb-stuttgart_borussia-dortmund/liveticker/")
     parsed_content = BeautifulSoup(content, "html.parser")
+    meta_data = match_details(parsed_content)
     for element in relevant_liveticker_events(parsed_content):
-        is_goal = element.attrs.get("data-event_action") == "goal"
-        liveticker_minute = element.select("div.liveticker-minute")[0].get_text()
-        print(liveticker_minute, is_goal, element)
+        pprint(liveticker_event_parser(element, meta_data))
