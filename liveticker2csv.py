@@ -37,7 +37,7 @@ def liveticker_content(liveticker_event: Tag) -> str:
 
 def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
     event_minute = int(liveticker_event.select("div.liveticker-minute")[0].get_text())
-    event_action = element.attrs.get("data-event_action")
+    event_action = liveticker_event.attrs.get("data-event_action")
     is_goal = event_action == "goal"
     is_card = event_action == "card"
     relevant_team = corresponding_team(liveticker_event)
@@ -63,13 +63,18 @@ def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
     }
 
 def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
-    for element in parsed_content.select("div.module-liveticker")[0].select("div.liveticker"):
+    for element in liveticker_events.select("div.module-liveticker")[0].select("div.liveticker"):
         if element.select("div.liveticker-minute")[0].get_text():
             yield element
 
-if __name__ == "__main__":
+def main():
     content = get_livetickerpage("https://livecenter.sportschau.de/fussball/deutschland-bundesliga/ma9242973/vfb-stuttgart_borussia-dortmund/liveticker/")
+    #with open("download.html", "w") as file:
+    #    file.write(content)
     parsed_content = BeautifulSoup(content, "html.parser")
     meta_data = match_details(parsed_content)
     for element in relevant_liveticker_events(parsed_content):
         pprint(liveticker_event_parser(element, meta_data))
+
+if __name__ == "__main__":
+    main()
