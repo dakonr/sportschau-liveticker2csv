@@ -33,7 +33,7 @@ def corresponding_team(liveticker_event: Tag) -> str:
 
 def liveticker_content(liveticker_event: Tag) -> str:
     for tag in liveticker_event.select("div.liveticker-content"):
-        return tag.get_text()
+        return str(tag.get_text()).replace('\n', ' ').replace('\r', '').strip()
 
 def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
     event_minute = int(liveticker_event.select("div.liveticker-minute")[0].get_text())
@@ -46,10 +46,10 @@ def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
     event_timestamp = None
     if event_minute <= 45:
         halftime = 1
-        event_timestamp = match_details.get("start_datetime") + pd.to_timedelta(f"{event_minute-1} min")
+        event_timestamp = match_details.get("start_datetime") + pd.to_timedelta(event_minute-1, unit="min")
     if event_minute > 45:
         halftime = 2
-        event_timestamp = match_details.get("end_datetime") - pd.to_timedelta(f"{90-event_minute} min")
+        event_timestamp = match_details.get("end_datetime") - pd.to_timedelta(90-event_minute, unit="min")
 
     return {
         "minute": event_minute,
@@ -68,13 +68,19 @@ def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
             yield element
 
 def main():
-    content = get_livetickerpage("https://livecenter.sportschau.de/fussball/deutschland-bundesliga/ma9242973/vfb-stuttgart_borussia-dortmund/liveticker/")
+    content = get_livetickerpage("https://livecenter.sportschau.de/fussball/deutschland-bundesliga/ma9243097/bayer-leverkusen_rb-leipzig/liveticker/")
     #with open("download.html", "w") as file:
     #    file.write(content)
     parsed_content = BeautifulSoup(content, "html.parser")
     meta_data = match_details(parsed_content)
-    for element in relevant_liveticker_events(parsed_content):
-        pprint(liveticker_event_parser(element, meta_data))
+    #for element in relevant_liveticker_events(parsed_content):
+    #    data_dict = liveticker_event_parser(element, meta_data)
+    #    pprint(data_dict)
+    #    df.append([data_dict], ignore_index=True)
+    data = [liveticker_event_parser(element, meta_data) for element in relevant_liveticker_events(parsed_content)]
+    df = pd.DataFrame(data)
+    print(df.head())
+    df.to_csv(Path("./test.csv") ,index=False)
 
 if __name__ == "__main__":
     main()
