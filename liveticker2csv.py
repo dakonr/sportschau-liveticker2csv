@@ -68,7 +68,7 @@ def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
             yield element
 
 def main():
-    content = get_livetickerpage("https://livecenter.sportschau.de/fussball/deutschland-bundesliga/ma9243097/bayer-leverkusen_rb-leipzig/liveticker/")
+    content = get_livetickerpage("https://livecenter.sportschau.de/fussball/fifa-wm-quali-europa/ma9168077/polen_schweden/liveticker/")
     #with open("download.html", "w") as file:
     #    file.write(content)
     parsed_content = BeautifulSoup(content, "html.parser")
