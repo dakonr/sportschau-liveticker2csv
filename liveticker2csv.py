@@ -73,10 +73,6 @@ def main():
     #    file.write(content)
     parsed_content = BeautifulSoup(content, "html.parser")
     meta_data = match_details(parsed_content)
-    #for element in relevant_liveticker_events(parsed_content):
-    #    data_dict = liveticker_event_parser(element, meta_data)
-    #    pprint(data_dict)
-    #    df.append([data_dict], ignore_index=True)
     data = [liveticker_event_parser(element, meta_data) for element in relevant_liveticker_events(parsed_content)]
     df = pd.DataFrame(data)
     print(df.head())
