@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup, Tag #Documentation: https://www.crummy.com/softwa
 from pathlib import Path
 import pandas as pd
 from pprint import pprint
+from typing import Union
 
 def get_livetickerpage(url: str) -> httpx.Response.text:
     page = httpx.get(url)
@@ -26,12 +27,12 @@ def match_details(parsed_content: BeautifulSoup) -> dict:
         "team_shortname_mapping": team_shortname_mapping
     }
 
-def corresponding_team(liveticker_event: Tag) -> str:
+def corresponding_team(liveticker_event: Tag) -> Union[str, None]:
     for tag in liveticker_event.select("div.team-shortname"):
         for a_tag in tag.select("a"):
             return Path(a_tag.attrs.get("href")).parts[-2]
 
-def liveticker_content(liveticker_event: Tag) -> str:
+def liveticker_content(liveticker_event: Tag) -> Union[str, None]:
     for tag in liveticker_event.select("div.liveticker-content"):
         return str(tag.get_text()).replace('\n', ' ').replace('\r', '').strip()
 
