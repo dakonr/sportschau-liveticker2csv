@@ -1,11 +1,14 @@
 # file: liveticker2csv.py
-import httpx #Documentation: https://www.python-httpx.org/quickstart/
 from collections.abc import Iterable
-from bs4 import BeautifulSoup, Tag #Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 from pathlib import Path
-import pandas as pd
 from pprint import pprint
 from typing import Union
+
+import httpx  # Documentation: https://www.python-httpx.org/quickstart/
+import pandas as pd
+from bs4 import (  # Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
+    BeautifulSoup, Tag)
+
 
 def get_livetickerpage(url: str) -> httpx.Response.text:
     page = httpx.get(url)
