@@ -81,15 +81,35 @@ def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
 
 def workflow(url: str, data_dir: str):
     data_path = Path(data_dir)
+    # Get and Parse Liveticker
     content = get_livetickerpage(url)
     with open(data_path.joinpath("raw_liveticker.html"), "w") as file:
         file.write(content)
-
     parsed_content = BeautifulSoup(content, "html.parser")
+    # Retrive Metadata
     meta_data = match_details(parsed_content)
+    meta_data["url"] = url
+    # Retrive Play Data
     data = [liveticker_event_parser(element, meta_data) for element in relevant_liveticker_events(parsed_content)]
     df = pd.DataFrame(data)
+    # Overtime Correction
+    overtime_df = df[df["action"] == "special"]
+    overtime_correction = 0
+    for row in overtime_df.itertuples():
+        if row.text.startswith("Offizielle Nachspielzeit (Minuten): ") and row.minute == 90:
+            overtime_correction += int(row.text.replace("Offizielle Nachspielzeit (Minuten): ", ""))
+    corrected_timestamps = []
+    for row in df.itertuples():
+        if row.minute > 89:
+            corrected_timestamps.append(row.timestamp - pd.to_timedelta(overtime_correction, unit="min"))
+        else:
+            corrected_timestamps.append(row.timestamp)
+    df["timestamp"] = corrected_timestamps
+    # Revert Dataframe
+    df = df.loc[::-1].reset_index(drop=True)
+    # Save to csv
     df.to_csv(data_path.joinpath(Path("./liveticker.csv")) ,index=False)
+    # Save Metadata
     with open(data_path.joinpath("metadata.json"), "w") as file:
         json.dump(meta_data, file, default=json_serial)
 
