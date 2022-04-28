@@ -96,7 +96,7 @@ def workflow(url: str, data_dir: str):
     overtime_df = df[df["action"] == "special"]
     overtime_correction = 0
     for row in overtime_df.itertuples():
-        if row.text.startswith("Offizielle Nachspielzeit (Minuten): ") and row.minute == 90:
+        if row.text.startswith("Offizielle Nachspielzeit (Minuten): "):
             overtime_text = row.text.replace("Offizielle Nachspielzeit (Minuten): ", "")
             overtime_correction += int(overtime_text.split(" ")[0])
     corrected_timestamps = []
