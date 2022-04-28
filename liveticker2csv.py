@@ -90,7 +90,6 @@ def workflow(url: str, data_dir: str):
     meta_data = match_details(parsed_content)
     data = [liveticker_event_parser(element, meta_data) for element in relevant_liveticker_events(parsed_content)]
     df = pd.DataFrame(data)
-    print(df.head())
     df.to_csv(data_path.joinpath(Path("./liveticker.csv")) ,index=False)
     with open(data_path.joinpath("metadata.json"), "w") as file:
         json.dump(meta_data, file, default=json_serial)
