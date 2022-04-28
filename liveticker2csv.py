@@ -4,6 +4,8 @@ from pathlib import Path
 from pprint import pprint
 from typing import Union
 
+import argparse
+import json
 import httpx  # Documentation: https://www.python-httpx.org/quickstart/
 import pandas as pd
 from bs4 import (  # Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
@@ -71,16 +73,28 @@ def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
         if element.select("div.liveticker-minute")[0].get_text():
             yield element
 
-def main():
-    content = get_livetickerpage("https://livecenter.sportschau.de/fussball/fifa-wm-quali-europa/ma9168077/polen_schweden/liveticker/")
-    #with open("download.html", "w") as file:
-    #    file.write(content)
+def workflow(url: str, data_dir: str):
+    data_path = Path(data_dir)
+    content = get_livetickerpage(url)
+    with open(data_path.joinpath("raw_liveticker.html"), "w") as file:
+        file.write(content)
+    # https://livecenter.sportschau.de/fussball/fifa-wm-quali-europa/ma9168077/polen_schweden/liveticker/
     parsed_content = BeautifulSoup(content, "html.parser")
     meta_data = match_details(parsed_content)
     data = [liveticker_event_parser(element, meta_data) for element in relevant_liveticker_events(parsed_content)]
     df = pd.DataFrame(data)
     print(df.head())
-    df.to_csv(Path("./test.csv") ,index=False)
+    df.to_csv(data_path.joinpath(Path("./liveticker.csv")) ,index=False)
+    with open(data_path.joinpath("metadata.json"), "w") as file:
+        
+
+def main():
+    parser = argparse.ArgumentParser(description="Process Sportschau Liveticker.")
+    parser.add_argument("--url", type=str, help="URL to Liveticker")
+    parser.add_argument("--data-dir", type=str, default="./", help="Path to folder to store data")
+    args = parser.parse_args()
+    print(f"Downloading Liveticker {args.url} \n and extract data to {args.data_dir}")
+    workflow(args.url, args.data_dir)
 
 if __name__ == "__main__":
     main()
