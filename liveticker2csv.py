@@ -105,6 +105,9 @@ def workflow(url: str, data_dir: str):
         else:
             corrected_timestamps.append(row.timestamp)
     df["timestamp"] = corrected_timestamps
+    # Get Pause Data
+    meta_data["break_start"] = df[df["minute"] == 45].iloc[0]["timestamp"]
+    meta_data["break_end"] = df[df["minute"] == 46].iloc[0]["timestamp"]
     # Revert Dataframe
     df = df.loc[::-1].reset_index(drop=True)
     # Save to csv
