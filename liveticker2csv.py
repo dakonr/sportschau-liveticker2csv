@@ -95,7 +95,7 @@ def workflow(url: str, data_dir: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Process Sportschau Liveticker.")
-    parser.add_argument("--url", type=str, help="URL to Liveticker")
+    parser.add_argument("--url", type=str, required=True, help="URL to Liveticker")
     parser.add_argument("--data-dir", type=str, default="./", help="Path to folder to store data")
     args = parser.parse_args()
     print(f"Downloading Liveticker {args.url} \nand extract data to {args.data_dir}")
