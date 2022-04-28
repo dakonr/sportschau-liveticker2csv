@@ -97,10 +97,11 @@ def workflow(url: str, data_dir: str):
     overtime_correction = 0
     for row in overtime_df.itertuples():
         if row.text.startswith("Offizielle Nachspielzeit (Minuten): ") and row.minute == 90:
-            overtime_correction += int(row.text.replace("Offizielle Nachspielzeit (Minuten): ", ""))
+            overtime_text = row.text.replace("Offizielle Nachspielzeit (Minuten): ", "")
+            overtime_correction += int(overtime_text.split(" ")[0])
     corrected_timestamps = []
     for row in df.itertuples():
-        if row.minute > 89:
+        if row.minute > 45:
             corrected_timestamps.append(row.timestamp - pd.to_timedelta(overtime_correction, unit="min"))
         else:
             corrected_timestamps.append(row.timestamp)
