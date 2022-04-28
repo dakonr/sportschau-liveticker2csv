@@ -5,12 +5,19 @@ from pprint import pprint
 from typing import Union
 
 import argparse
+from datetime import date, datetime
 import json
 import httpx  # Documentation: https://www.python-httpx.org/quickstart/
 import pandas as pd
 from bs4 import (  # Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
     BeautifulSoup, Tag)
 
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError ("Type %s not serializable" % type(obj))
 
 def get_livetickerpage(url: str) -> httpx.Response.text:
     page = httpx.get(url)
@@ -86,14 +93,14 @@ def workflow(url: str, data_dir: str):
     print(df.head())
     df.to_csv(data_path.joinpath(Path("./liveticker.csv")) ,index=False)
     with open(data_path.joinpath("metadata.json"), "w") as file:
-        
+        json.dump(meta_data, file, default=json_serial)
 
 def main():
     parser = argparse.ArgumentParser(description="Process Sportschau Liveticker.")
     parser.add_argument("--url", type=str, help="URL to Liveticker")
     parser.add_argument("--data-dir", type=str, default="./", help="Path to folder to store data")
     args = parser.parse_args()
-    print(f"Downloading Liveticker {args.url} \n and extract data to {args.data_dir}")
+    print(f"Downloading Liveticker {args.url} \nand extract data to {args.data_dir}")
     workflow(args.url, args.data_dir)
 
 if __name__ == "__main__":
