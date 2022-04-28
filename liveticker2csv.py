@@ -1,12 +1,12 @@
 # file: liveticker2csv.py
+import argparse
+import json
 from collections.abc import Iterable
+from datetime import date, datetime
 from pathlib import Path
 from pprint import pprint
 from typing import Union
 
-import argparse
-from datetime import date, datetime
-import json
 import httpx  # Documentation: https://www.python-httpx.org/quickstart/
 import pandas as pd
 from bs4 import (  # Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
