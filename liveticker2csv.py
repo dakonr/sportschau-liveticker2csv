@@ -85,7 +85,7 @@ def workflow(url: str, data_dir: str):
     content = get_livetickerpage(url)
     with open(data_path.joinpath("raw_liveticker.html"), "w") as file:
         file.write(content)
-    # https://livecenter.sportschau.de/fussball/fifa-wm-quali-europa/ma9168077/polen_schweden/liveticker/
+
     parsed_content = BeautifulSoup(content, "html.parser")
     meta_data = match_details(parsed_content)
     data = [liveticker_event_parser(element, meta_data) for element in relevant_liveticker_events(parsed_content)]
