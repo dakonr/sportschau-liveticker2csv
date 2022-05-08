@@ -74,7 +74,7 @@ def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
         "text": text
     }
 
-def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable:
+def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable[Tag]:
     for element in liveticker_events.select("div.module-liveticker")[0].select("div.liveticker"):
         if element.select("div.liveticker-minute")[0].get_text():
             yield element
