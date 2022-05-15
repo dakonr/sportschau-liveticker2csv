@@ -80,10 +80,9 @@ def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable[Tag
             yield element
 
 def workflow(url: str, data_dir: str):
+    data_path = Path(data_dir)
     # Get and Parse Liveticker
     content = get_livetickerpage(url)
-    # Parse filepath
-    data_path = Path(data_dir)
     with open(data_path.joinpath("raw_liveticker.html"), "w") as file:
         file.write(content)
     parsed_content = BeautifulSoup(content, "html.parser")
