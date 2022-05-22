@@ -121,6 +121,9 @@ def workflow(url: str, data_dir: str):
     meta_data["break_start"] = df[df["minute"] == 45].iloc[0]["timestamp"]
     meta_data["break_end"] = df[df["minute"] == 46].iloc[0]["timestamp"]
 
+    # Clean DataFrame
+    df.drop(columns=["datetime"])
+    
     # Save to csv
     df.to_csv(data_path.joinpath(Path("./liveticker.csv")) ,index=False)
     # Save Metadata
