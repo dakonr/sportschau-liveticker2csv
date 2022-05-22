@@ -10,6 +10,7 @@ import httpx  # Documentation: https://www.python-httpx.org/quickstart/
 import pandas as pd
 from bs4 import (  # Documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
     BeautifulSoup, Tag)
+from pytz import utc
 
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
@@ -55,13 +56,12 @@ def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
     relevant_team = corresponding_team(liveticker_event)
     text = liveticker_content(liveticker_event)
     halftime = 0
-    event_timestamp = None
+    event_timestamp = liveticker_event.select("div.liveticker-datetime")[0].get_text()
+
     if event_minute <= 45:
         halftime = 1
-        event_timestamp = match_details.get("start_datetime") + pd.to_timedelta(event_minute-1, unit="min")
     if event_minute > 45:
         halftime = 2
-        event_timestamp = match_details.get("end_datetime") - pd.to_timedelta(90-event_minute, unit="min")
 
     return {
         "minute": event_minute,
@@ -70,7 +70,7 @@ def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
         "is_card": is_card,
         "relevant_team": relevant_team,
         "halftime": halftime,
-        "timestamp": event_timestamp,
+        "datetime": event_timestamp,
         "text": text
     }
 
@@ -81,36 +81,46 @@ def relevant_liveticker_events(liveticker_events: BeautifulSoup) -> Iterable[Tag
 
 def workflow(url: str, data_dir: str):
     data_path = Path(data_dir)
+
     # Get and Parse Liveticker
     content = get_livetickerpage(url)
     with open(data_path.joinpath("raw_liveticker.html"), "w") as file:
         file.write(content)
     parsed_content = BeautifulSoup(content, "html.parser")
+
     # Retrive Metadata
     meta_data = match_details(parsed_content)
     meta_data["url"] = url
+
     # Retrive Play Data
     data = [liveticker_event_parser(element, meta_data) for element in relevant_liveticker_events(parsed_content)]
     df = pd.DataFrame(data)
-    # Overtime Correction
-    overtime_df = df[df["action"] == "special"]
-    overtime_correction = 0
-    for row in overtime_df.itertuples():
-        if row.text.startswith("Offizielle Nachspielzeit (Minuten): "):
-            overtime_text = row.text.replace("Offizielle Nachspielzeit (Minuten): ", "")
-            overtime_correction += int(overtime_text.split(" ")[0])
+
+    # Revert Dataframe
+    df = df.loc[::-1].reset_index(drop=True)
+    # Create UTC Timestamp
+    play_start = meta_data["start_datetime"]
+    utc_timedelta = pd.to_datetime(
+        f'{play_start.strftime("%m/%d/%Y-")}{df["datetime"][0]}',
+        format="%m/%d/%Y-%H:%M",
+        utc=True
+        ) - play_start #"%Y-%m-%d %H:%M:%S"
+
     corrected_timestamps = []
     for row in df.itertuples():
-        if row.minute > 45:
-            corrected_timestamps.append(row.timestamp - pd.to_timedelta(overtime_correction, unit="min"))
-        else:
-            corrected_timestamps.append(row.timestamp)
+        corrected_timestamps.append(
+            pd.to_datetime(
+        f'{play_start.strftime("%m/%d/%Y-")}{row.datetime}',
+        format="%m/%d/%Y-%H:%M",
+        utc=True
+        ) - utc_timedelta
+        )
     df["timestamp"] = corrected_timestamps
+    
     # Get Pause Data
     meta_data["break_start"] = df[df["minute"] == 45].iloc[0]["timestamp"]
     meta_data["break_end"] = df[df["minute"] == 46].iloc[0]["timestamp"]
-    # Revert Dataframe
-    df = df.loc[::-1].reset_index(drop=True)
+
     # Save to csv
     df.to_csv(data_path.joinpath(Path("./liveticker.csv")) ,index=False)
     # Save Metadata
