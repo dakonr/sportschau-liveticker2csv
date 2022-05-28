@@ -104,7 +104,7 @@ def workflow(url: str, data_dir: str):
         f'{play_start.strftime("%m/%d/%Y-")}{df["datetime"][0]}',
         format="%m/%d/%Y-%H:%M",
         utc=True
-        ) - play_start #"%Y-%m-%d %H:%M:%S"
+        ) - play_start #"%m/%d/%Y-%H:%M"
 
     corrected_timestamps = []
     for row in df.itertuples():
