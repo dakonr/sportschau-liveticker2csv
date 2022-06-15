@@ -49,7 +49,7 @@ def liveticker_content(liveticker_event: Tag) -> Union[str, None]:
         return str(tag.get_text()).replace('\n', ' ').replace('\r', '').strip()
 
 def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
-    event_minute = int(liveticker_event.select("div.liveticker-minute")[0].get_text())
+    event_minute = int(liveticker_event.select("div.liveticker-minute")[0].get_text().replace(".", ""))
     event_action = liveticker_event.attrs.get("data-event_action")
     is_goal = event_action == "goal"
     is_card = event_action == "card"
