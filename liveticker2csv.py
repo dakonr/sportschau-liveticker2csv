@@ -49,7 +49,7 @@ def liveticker_content(liveticker_event: Tag) -> Union[str, None]:
         return str(tag.get_text()).replace('\n', ' ').replace('\r', '').strip()
 
 def liveticker_event_parser(liveticker_event: Tag, match_details: dict) -> dict:
-    event_minute = int(liveticker_event.select("div.liveticker-minute")[0].get_text())
+    event_minute = int(liveticker_event.select("div.liveticker-minute")[0].get_text().replace(".", ""))
     event_action = liveticker_event.attrs.get("data-event_action")
     is_goal = event_action == "goal"
     is_card = event_action == "card"
@@ -104,7 +104,7 @@ def workflow(url: str, data_dir: str):
         f'{play_start.strftime("%m/%d/%Y-")}{df["datetime"][0]}',
         format="%m/%d/%Y-%H:%M",
         utc=True
-        ) - play_start #"%Y-%m-%d %H:%M:%S"
+        ) - play_start #"%m/%d/%Y-%H:%M"
 
     corrected_timestamps = []
     for row in df.itertuples():
@@ -118,7 +118,7 @@ def workflow(url: str, data_dir: str):
     df["timestamp"] = corrected_timestamps
     
     # Get Pause Data
-    meta_data["break_start"] = df[df["minute"] == 45].iloc[0]["timestamp"]
+    meta_data["break_start"] = df[df["minute"] == 45].iloc[-1]["timestamp"]
     meta_data["break_end"] = df[df["minute"] == 46].iloc[0]["timestamp"]
 
     # Clean DataFrame
